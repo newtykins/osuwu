@@ -74,10 +74,14 @@ export class OsuAPI {
 			const playCount = parseInt(beatmap['playcount']);
 			const passCount = parseInt(beatmap['passcount']);
 			const passRate = (playCount / passCount) * 100;
+			const beatmapsetID = parseInt(beatmap['beatmapset_id']);
+			const beatmapID = parseInt(beatmap['beatmap_id']);
+			const coverImage = `https://assets.ppy.sh/beatmaps/${beatmapsetID}/covers/cover.jpg`;
+			const coverThumbnail = `https://b.ppy.sh/thumb/${beatmapsetID}l.jpg`; 
 
 			return {
-				beatmapsetID: beatmap['beatmapset_id'],
-				beatmapID: beatmap['beatmap_id'],
+				beatmapsetID,
+				beatmapID,
 				difficultyName: beatmap['version'],
 				difficultyStats: {
 					cs: parseFloat(beatmap['diff_size']),
@@ -117,6 +121,10 @@ export class OsuAPI {
 					sliders,
 					spinners,
 					total: circles + sliders + spinners
+				},
+				cover: {
+					image: coverImage,
+					thumbnail: coverThumbnail
 				},
 				favourites: parseInt(beatmap['favourite_count']),
 				rating: parseFloat(beatmap['rating']),
