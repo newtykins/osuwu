@@ -1,5 +1,5 @@
-import OsUwU from './OsUwU';
+import osuwu from './osuwu';
 
 export {
-	OsUwU
+	osuwu
 }
