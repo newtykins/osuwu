@@ -1,3 +1,5 @@
+import * as ojsama from 'ojsama';
+
 export default {
 	// Enums for beatmaps
 	Beatmaps: {
@@ -69,5 +71,6 @@ export default {
 			13: 'Polish',
 			14: 'Other'
 		}
-	}
+	},
+	Mods: ojsama.modbits,
 }

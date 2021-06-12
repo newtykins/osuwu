@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Constants from './Constants';
 import * as countries from 'i18n-iso-countries';
+import * as ojsama from 'ojsama';
 
 type UserType = 'id' | 'username';
 type PrependNextNum<A extends Array<unknown>> = A['length'] extends infer T ? ((t: T, ...a: A) => void) extends ((...x: infer X) => void) ? X : never : never;
@@ -24,6 +25,13 @@ interface UserOptions {
 	mode?: keyof (typeof Constants.Beatmaps.modes);
 	userType?: UserType;
 	eventDays: Range<1, 32>;
+}
+
+interface CalculatorOptions {
+	mods?: number | string;
+	combo?: number;
+	miss?: number;
+	accuracy?: number;
 }
 
 export class OsuAPI {
@@ -129,7 +137,7 @@ export class OsuAPI {
 				playCount,
 				passCount,
 				passPercentage,
-				objectCounts: {
+				objects: {
 					circles,
 					sliders,
 					spinners,
@@ -155,6 +163,110 @@ export class OsuAPI {
 		});
 
 		return parsedBeatmaps;
+	}
+
+	/**
+	 * Calculate the pp of a given beatmap
+	 * @param beatmapID The ID of the beatmap to calculate for
+	 * @param options Options for the PP calculator to process
+	 * @async
+	 */
+	public async calculatePP(beatmapID: string, options?: CalculatorOptions) {
+		// Download the beatmap file
+		const osuFile = await axios.get(`https://osu.ppy.sh/osu/${beatmapID}`, { responseType: 'blob' });
+
+		// Parse it
+		const parser = new ojsama.parser().feed(osuFile.data);
+		let mods = 0;
+		let modsString = 'NM';
+		let accuracy = 100;
+		let miss = 0;
+		const maxCombo = parser.map.max_combo();
+		let combo = maxCombo;
+
+		if (options) {
+			if (typeof options.mods === 'string') {
+				mods = this.constants.Mods.from_string(options.mods);
+				modsString = options.mods;
+			} else {
+				mods = options.mods;
+				modsString = this.constants.Mods.string(options.mods);
+			}
+
+			if (options.accuracy) {
+				accuracy = options.accuracy;
+			}
+
+			if (options.miss) {
+				miss = options.miss;
+			}
+
+			if (options.combo) {
+				combo = options.combo;
+			}
+		}
+
+		// Calculate difficulty and pp
+		const stars = new ojsama.diff().calc({
+			map: parser.map,
+			mods,
+		});
+		const pp = ojsama.ppv2({
+			stars,
+			combo,
+			nmiss: miss,
+			acc_percent: accuracy,
+			map: parser.map
+		});
+		const { computed_accuracy } = pp;
+		
+		// Find the beatmap by the ID
+		const beatmap = (await this.getBeatmaps({ beatmapID }))[0];
+
+		// Compile the rest of the data
+		const data = {
+			artist: beatmap.artist.value,
+			title: beatmap.title.value,
+			mapper: beatmap.mapper.username,
+			difficulty: beatmap.difficultyName,
+			beatmapID: beatmap.beatmapID,
+			beatmapsetID: beatmap.beatmapsetID,
+			cs: parser.map.cs,
+			ar: parser.map.ar,
+			od: parser.map.od,
+			hp: parser.map.hp,
+			objects: {
+				total: parser.map.objects.length,
+				circles: parser.map.ncircles,
+				sliders: parser.map.nsliders,
+				spinners: parser.map.nspinners
+			},
+			stars: {
+				total: stars.total,
+				aim: stars.aim,
+				speed: stars.speed
+			},
+			mods: options && options.mods ? modsString : 'NM',
+			combo: {
+				top: combo,
+				max: maxCombo
+			},
+			accuracy,
+			pp: {
+				total: pp.total,
+				aim: pp.aim,
+				speed: pp.speed,
+				acc: pp.acc
+			},
+			computedAccuracy: {
+				miss: computed_accuracy.nmiss,
+				300: computed_accuracy.n300,
+				100: computed_accuracy.n100,
+				50: computed_accuracy.n50
+			}
+		}
+
+		return data;
 	}
 
 	/**

@@ -9,7 +9,8 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.1",
-    "i18n-iso-countries": "^6.7.0"
+    "i18n-iso-countries": "^6.7.0",
+    "ojsama": "^2.2.0"
   },
   "devDependencies": {
     "@types/node": "^15.12.2",
