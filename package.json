@@ -1,0 +1,17 @@
+{
+  "name": "osugame",
+  "version": "1.0.0",
+  "description": "A modern wrapper for the osu! API",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "repository": "https://github.com/newtykins/osu-wrapper",
+  "author": "newtykins",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.21.1"
+  },
+  "devDependencies": {
+    "@types/node": "^15.12.2",
+    "typescript": "^4.3.2"
+  }
+}
