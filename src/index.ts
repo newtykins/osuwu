@@ -1,5 +1,5 @@
-import { OsuAPI } from "./OsuAPI";
+import OsUwU from './OsUwU';
 
 export {
-	OsuAPI as API
+	OsUwU
 }

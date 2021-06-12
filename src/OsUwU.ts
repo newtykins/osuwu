@@ -2,39 +2,9 @@ import axios from 'axios';
 import Constants from './Constants';
 import * as countries from 'i18n-iso-countries';
 import * as ojsama from 'ojsama';
+import { BeatmapOptions, CalculatorOptions, CalculatorResponse, UserOptions, Beatmap, Event, User } from './Types';
 
-type UserType = 'id' | 'username';
-type PrependNextNum<A extends Array<unknown>> = A['length'] extends infer T ? ((t: T, ...a: A) => void) extends ((...x: infer X) => void) ? X : never : never;
-type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A, 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A['length'] ? 0 : 1];
-export type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
-export type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
-
-interface BeatmapOptions {
-	since?: Date;
-	beatmapsetID?: string;
-	beatmapID?: string;
-	user?: string;
-	userType?: UserType;
-	mode?: keyof (typeof Constants.Beatmaps.modes),
-	converted?: boolean;
-	hash?: string;
-	limit?: number;
-}
-
-interface UserOptions {
-	mode?: keyof (typeof Constants.Beatmaps.modes);
-	userType?: UserType;
-	eventDays: Range<1, 32>;
-}
-
-interface CalculatorOptions {
-	mods?: number | string;
-	combo?: number;
-	miss?: number;
-	accuracy?: number;
-}
-
-export class OsuAPI {
+export default class {
 	private apiKey: string;
 	public baseUrl = 'https://osu.ppy.sh/api';
 	public constants = Constants;
@@ -73,7 +43,7 @@ export class OsuAPI {
 	 * @param options Configuration of the parameters available for the endpoint
 	 * @async
 	 */
-	public async getBeatmaps(options?: BeatmapOptions) {
+	public async getBeatmaps(options?: BeatmapOptions): Promise<Beatmap[]> {
 		// Make the request
 		const beatmaps = await this.makeRequest('get_beatmaps', {
 			since: options.since,
@@ -115,14 +85,8 @@ export class OsuAPI {
 					aim: parseFloat(beatmap['diff_aim']),
 					speed: parseFloat(beatmap['diff_speed'])
 				},
-				artist: {
-					value: beatmap['artist'],
-					unicode: beatmap['artist_unicode']
-				},
-				title: {
-					value: beatmap['title'],
-					unicode: beatmap['title_unicode']
-				},
+				artist: beatmap['artist'],
+				title: beatmap['title'],
 				mapper: {
 					username: beatmap['creator'],
 					id: beatmap['creator_id']
@@ -159,7 +123,7 @@ export class OsuAPI {
 				video: beatmap['video'] === '1',
 				downloadUnavailable: beatmap['download_unavailable'] === '1',
 				audioUnavailable: beatmap['audio_unavailable'] === '1'
-			}
+			} as Beatmap
 		});
 
 		return parsedBeatmaps;
@@ -171,7 +135,7 @@ export class OsuAPI {
 	 * @param options Options for the PP calculator to process
 	 * @async
 	 */
-	public async calculatePP(beatmapID: string, options?: CalculatorOptions) {
+	public async calculatePP(beatmapID: string, options?: CalculatorOptions): Promise<CalculatorResponse> {
 		// Download the beatmap file
 		const osuFile = await axios.get(`https://osu.ppy.sh/osu/${beatmapID}`, { responseType: 'blob' });
 
@@ -225,8 +189,8 @@ export class OsuAPI {
 
 		// Compile the rest of the data
 		const data = {
-			artist: beatmap.artist.value,
-			title: beatmap.title.value,
+			artist: beatmap.artist,
+			title: beatmap.title,
 			mapper: beatmap.mapper.username,
 			difficulty: beatmap.difficultyName,
 			beatmapID: beatmap.beatmapID,
@@ -275,7 +239,7 @@ export class OsuAPI {
 	 * @param options Configuration of the parameters available for the endpoint
 	 * @async
 	 */
-	public async getUser(u: string, options?: UserOptions) {
+	public async getUser(u: string, options?: UserOptions): Promise<User> {
 		const user = (await this.makeRequest('get_user', options ? {
 			u,
 			m: options.mode,
@@ -322,7 +286,7 @@ export class OsuAPI {
 					beatmapsetID: parseInt(event['beatmapset_id']),
 					date: new Date(event['date']),
 					epicFactor: parseInt(event['epicfactor'])
-				}
+				} as Event;
 			});
 		}
 
@@ -373,7 +337,7 @@ export class OsuAPI {
 			country: countries.getName(user['country'], 'en', { select: 'official' }),
 			secondsPlayed: parseInt(user['total_seconds_played']),
 			events
-		}
+		} as User
 
 		return parsedUser;
 	}
