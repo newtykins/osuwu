@@ -1,16 +1,29 @@
 import axios from 'axios';
 import Constants from './Constants';
+import * as countries from 'i18n-iso-countries';
+
+type UserType = 'id' | 'username';
+type PrependNextNum<A extends Array<unknown>> = A['length'] extends infer T ? ((t: T, ...a: A) => void) extends ((...x: infer X) => void) ? X : never : never;
+type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A, 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A['length'] ? 0 : 1];
+export type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
+export type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
 
 interface BeatmapOptions {
 	since?: Date;
 	beatmapsetID?: string;
 	beatmapID?: string;
 	user?: string;
-	userType?: 'id' | 'username',
+	userType?: UserType;
 	mode?: keyof (typeof Constants.Beatmaps.modes),
 	converted?: boolean;
 	hash?: string;
 	limit?: number;
+}
+
+interface UserOptions {
+	mode?: keyof (typeof Constants.Beatmaps.modes);
+	userType?: UserType;
+	eventDays: Range<1, 32>;
 }
 
 export class OsuAPI {
@@ -73,7 +86,7 @@ export class OsuAPI {
 			const spinners = parseInt(beatmap['count_spinner']);
 			const playCount = parseInt(beatmap['playcount']);
 			const passCount = parseInt(beatmap['passcount']);
-			const passRate = (playCount / passCount) * 100;
+			const passPercentage = (playCount / passCount) * 100;
 			const beatmapsetID = parseInt(beatmap['beatmapset_id']);
 			const beatmapID = parseInt(beatmap['beatmap_id']);
 			const coverImage = `https://assets.ppy.sh/beatmaps/${beatmapsetID}/covers/cover.jpg`;
@@ -115,7 +128,7 @@ export class OsuAPI {
 				mode: this.constants.Beatmaps.modes[parseInt(beatmap['mode'])],
 				playCount,
 				passCount,
-				passRate,
+				passPercentage,
 				objectCounts: {
 					circles,
 					sliders,
@@ -128,8 +141,8 @@ export class OsuAPI {
 				},
 				favourites: parseInt(beatmap['favourite_count']),
 				rating: parseFloat(beatmap['rating']),
-				totalLength: parseFloat(beatmap['total_length']),
-				hitLength: parseFloat(beatmap['hit_length']),
+				totalLengthSeconds: parseFloat(beatmap['total_length']),
+				hitLengthSeconds: parseFloat(beatmap['hit_length']),
 				fileMD5: beatmap['file_md5'],
 				submissionDate: new Date(beatmap['submit_date']),
 				approvedDate: beatmap['approved_date'] ? new Date(beatmap['approved_date']) : undefined,
@@ -142,5 +155,114 @@ export class OsuAPI {
 		});
 
 		return parsedBeatmaps;
+	}
+
+	/**
+	 * Retrieve general user information
+	 * @param u Either the user ID or username of the user you would like to find
+	 * @param options Configuration of the parameters available for the endpoint
+	 * @async
+	 */
+	public async getUser(u: string, options?: UserOptions) {
+		const user = (await this.makeRequest('get_user', options ? {
+			u,
+			m: options.mode,
+			type: options.userType,
+			'event_days': options.eventDays
+		} : { u }))[0];
+
+		// General
+		const userID = parseInt(user['user_id']);
+		const avatarURL = `https://a.ppy.sh/${userID}`;
+		const playCount = parseInt(user['playcount']);
+
+		// Hit counts and ratios
+		const count300 = parseInt(user['count300']);
+		const count100 = parseInt(user['count100']);
+		const count50 = parseInt(user['count50']);
+		const totalHits = count300 + count100 + count50;
+		const percentage300 = (count300 / totalHits) * 100;
+		const perecentage100 = (count100 / totalHits) * 100;
+		const percentage50 = (count50 / totalHits) * 100;
+
+		// Score
+		const rankedScore = parseInt(user['ranked_score']);
+		const totalScore = parseInt(user['total_score']);
+		const unrankedScore = totalScore - rankedScore;
+		const scorePerPlay = totalScore / playCount;
+		
+		// Ranks
+		const ssGold = parseInt(user['count_rank_ss']);
+		const ssSilver = parseInt(user['count_rank_ssh']);
+		const ssTotal = ssGold + ssSilver;
+		const sGold = parseInt(user['count_rank_s']);
+		const sSilver = parseInt(user['count_rank_sh']);
+		const sTotal = sGold + sSilver;
+
+		// Events
+		let events = undefined;
+
+		if (user['events']) {
+			events = user['events'].map((event: object) => {
+				return {
+					html: event['display_html'],
+					beatmapID: parseInt(event['beatmap_id']),
+					beatmapsetID: parseInt(event['beatmapset_id']),
+					date: new Date(event['date']),
+					epicFactor: parseInt(event['epicfactor'])
+				}
+			});
+		}
+
+		const parsedUser = {
+			userID,
+			username: user['username'],
+			avatarURL,
+			joinDate: new Date(user['join_date']),
+			hitCounts: {
+				300: {
+					amount: count300,
+					percentage: percentage300
+				},
+				100: {
+					amount: count100,
+					percentage: perecentage100
+				},
+				50: {
+					amount: count50,
+					percentage: percentage50
+				}
+			},
+			playCount,
+			level: parseFloat(user['level']),
+			rank: parseInt(user['pp_rank']),
+			countryRank: parseInt(user['pp_country_rank']),
+			pp: parseInt(user['pp_raw']),
+			accuracy: parseFloat(user['accuracy']),
+			score: {
+				total: totalScore,
+				ranked: rankedScore,
+				unranked: unrankedScore,
+				perPlay: scorePerPlay
+			},
+			ranks: {
+				SS: {
+					gold: ssGold,
+					silver: ssSilver,
+					total: ssTotal
+				},
+				S: {
+					gold: sGold,
+					silver: sSilver,
+					total: sTotal
+				},
+				a: parseInt(user['count_rank_a'])
+			},
+			country: countries.getName(user['country'], 'en', { select: 'official' }),
+			secondsPlayed: parseInt(user['total_seconds_played']),
+			events
+		}
+
+		return parsedUser;
 	}
 }
