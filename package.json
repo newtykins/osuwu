@@ -9,6 +9,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.1",
+    "chalk": "^4.1.1",
     "i18n-iso-countries": "^6.7.0",
     "ojsama": "^2.2.0"
   },

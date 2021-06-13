@@ -5,6 +5,21 @@ export type PrependNextNum<A extends Array<unknown>> = A['length'] extends infer
 export type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A, 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A['length'] ? 0 : 1];
 export type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
 export type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
+export interface HitCounts {
+	300: {
+		amount: number;
+		percentage: number;
+	}
+	100: {
+		amount: number;
+		percentage: number;
+	}
+	50: {
+		amount: number;
+		percentage: number;
+	}
+}
+
 
 export interface BeatmapOptions {
 	since?: Date;
@@ -92,20 +107,7 @@ export interface User {
 	username: string;
 	avatarURL: string;
 	joinDate: Date;
-	hitCounts: {
-		300: {
-			amount: number;
-			percentage: number;
-		}
-		100: {
-			amount: number;
-			percentage: number;
-		}
-		50: {
-			amount: number;
-			percentage: number;
-		}
-	}
+	hitCounts: HitCounts;
 	playCount: number;
 	level: number;
 	rank: number;
@@ -136,14 +138,14 @@ export interface User {
 	events: Event[]
 }
 
-export interface CalculatorOptions {
+export interface PPCalculatorOptions {
 	mods?: number | string;
 	combo?: number;
 	miss?: number;
 	accuracy?: number;
 }
 
-export interface CalculatorResponse {
+export interface PPCalculation {
 	artist: string;
 	title: string;
 	mapper: string;
@@ -183,4 +185,34 @@ export interface CalculatorResponse {
 		100: number;
 		50: number;
 	}
+}
+
+export interface ScoreOptions {
+	user?: number;
+	mode?: typeof Constants.Beatmaps.modes;
+	mods?: number | string;
+	type?: UserType;
+	limit?: number;
+}
+
+export interface Score {
+	scoreID: number;
+	score: number;
+	username: string;
+	hitCounts: {
+		300: number;
+		100: number;
+		50: number;
+	}
+	missCount: number;
+	katuCount: number;
+	gekiCount: number;
+	maxCombo: number;
+	perfectCombo: boolean;
+	mods: number;
+	userID: number;
+	date: Date;
+	rank: string;
+	pp: number;
+	replayAvailable: boolean;
 }

@@ -2,9 +2,10 @@ import axios from 'axios';
 import Constants from './Constants';
 import * as countries from 'i18n-iso-countries';
 import * as ojsama from 'ojsama';
-import { BeatmapOptions, CalculatorOptions, CalculatorResponse, UserOptions, Beatmap, Event, User } from './Types';
+import * as chalk from 'chalk';
+import { BeatmapOptions, PPCalculatorOptions, PPCalculation, UserOptions, Beatmap, Event, User, ScoreOptions, Score } from './Types';
 
-export default class {
+export default class osuwu {
 	private apiKey: string;
 	public baseUrl = 'https://osu.ppy.sh/api';
 	public constants = Constants;
@@ -20,7 +21,7 @@ export default class {
 	 * @async
 	 * @private
 	 */
-	private async makeRequest(endpoint: string, parameters?: object): Promise<object | object[]> {
+	private async makeRequest(endpoint: string, parameters?: object): Promise<object[]> {
 		let url = `${this.baseUrl}/${endpoint}?k=${this.apiKey}`;
 
 		if (parameters) {
@@ -33,9 +34,34 @@ export default class {
 			});
 		}
 
-		console.log(url);
-
 		return (await (axios.get(url))).data;
+	}
+
+	/**
+	 * Logs a warning using chalk
+	 * @param msg The warn message
+	 * @private
+	 */
+	private warn(msg: string) {
+		console.log(chalk.yellow(chalk.bold(`WARN: ${msg}`)));
+	}
+
+	/**
+	 * Warn when fetch limit boundaries are not met
+	 * @param min The minimum amount fetchable
+	 * @param max The maximum amount fetchable
+	 * @param limitOf A noun describing what is being fetches
+	 * @param options The options of the method
+	 * @private
+	 */
+	private checkLimits(min: number, max: number, limitOf: string, options: object) {
+		if (options && options['limit']) {
+			if (options['limit'] <= min) {
+				this.warn(`The minimum amount of ${limitOf} you can fetch is ${min}, so ${min} ${limitOf} has been returned!`);
+			} else if (options['limit'] > max) {
+				this.warn(`The maximum amount of ${limitOf} you can fetch is ${max}, so ${max} ${limitOf} have been returned!`);
+			}
+		}
 	}
 
 	/**
@@ -44,6 +70,9 @@ export default class {
 	 * @async
 	 */
 	public async getBeatmaps(options?: BeatmapOptions): Promise<Beatmap[]> {
+		// Warn the user if fetch limit boundaries are not met
+		this.checkLimits(1, 500, 'beatmaps', options);
+
 		// Make the request
 		const beatmaps = await this.makeRequest('get_beatmaps', {
 			since: options.since,
@@ -55,10 +84,10 @@ export default class {
 			a: options.converted,
 			h: options.hash,
 			limit: options.limit
-		}) as object[];
+		});
 
 		// Parse the beatmaps
-		const parsedBeatmaps = beatmaps.map(beatmap => {
+		const parsedBeatmaps = beatmaps.map((beatmap): Beatmap => {
 			const circles = parseInt(beatmap['count_normal']);
 			const sliders = parseInt(beatmap['count_slider']);
 			const spinners = parseInt(beatmap['count_spinner']);
@@ -123,7 +152,7 @@ export default class {
 				video: beatmap['video'] === '1',
 				downloadUnavailable: beatmap['download_unavailable'] === '1',
 				audioUnavailable: beatmap['audio_unavailable'] === '1'
-			} as Beatmap
+			}
 		});
 
 		return parsedBeatmaps;
@@ -135,7 +164,7 @@ export default class {
 	 * @param options Options for the PP calculator to process
 	 * @async
 	 */
-	public async calculatePP(beatmapID: string, options?: CalculatorOptions): Promise<CalculatorResponse> {
+	public async calculatePP(beatmapID: string, options?: PPCalculatorOptions): Promise<PPCalculation> {
 		// Download the beatmap file
 		const osuFile = await axios.get(`https://osu.ppy.sh/osu/${beatmapID}`, { responseType: 'blob' });
 
@@ -258,7 +287,7 @@ export default class {
 		const count50 = parseInt(user['count50']);
 		const totalHits = count300 + count100 + count50;
 		const percentage300 = (count300 / totalHits) * 100;
-		const perecentage100 = (count100 / totalHits) * 100;
+		const percentage100 = (count100 / totalHits) * 100;
 		const percentage50 = (count50 / totalHits) * 100;
 
 		// Score
@@ -279,18 +308,18 @@ export default class {
 		let events = undefined;
 
 		if (user['events']) {
-			events = user['events'].map((event: object) => {
+			events = user['events'].map((event: object): Event => {
 				return {
 					html: event['display_html'],
 					beatmapID: parseInt(event['beatmap_id']),
 					beatmapsetID: parseInt(event['beatmapset_id']),
 					date: new Date(event['date']),
 					epicFactor: parseInt(event['epicfactor'])
-				} as Event;
+				}
 			});
 		}
 
-		const parsedUser = {
+		const parsedUser: User = {
 			userID,
 			username: user['username'],
 			avatarURL,
@@ -302,7 +331,7 @@ export default class {
 				},
 				100: {
 					amount: count100,
-					percentage: perecentage100
+					percentage: percentage100
 				},
 				50: {
 					amount: count50,
@@ -337,8 +366,55 @@ export default class {
 			country: countries.getName(user['country'], 'en', { select: 'official' }),
 			secondsPlayed: parseInt(user['total_seconds_played']),
 			events
-		} as User
+		}
 
 		return parsedUser;
+	}
+
+	public async getScores(beatmapID: number, options?: ScoreOptions): Promise<Score[]> {
+		// Warn the user if fetch limit boundaries are not met
+		this.checkLimits(1, 100, 'scores', options);
+
+		// Make the request
+		const scores = await this.makeRequest('get_scores', {
+			b: beatmapID,
+			u: options.user,
+			m: options.mode,
+			mods: typeof options.mods === 'string' ? ojsama.modbits.from_string(options.mods) : options.mods,
+			type: options.type,
+			limit: options.limit
+		});
+
+		// Format the scores
+		const formattedScores: Score[] = scores.map((score): Score => {
+			// Hit counts and ratios
+			const count300 = parseInt(score['count300']);
+			const count100 = parseInt(score['count100']);
+			const count50 = parseInt(score['count50']);
+
+			return {
+				scoreID: parseInt(score['score_id']),
+				score: parseInt(score['score']),
+				username: score['username'],
+				hitCounts: {
+					300: count300,
+					100: count100,
+					50: count50
+				},
+				missCount: parseInt(score['countmiss']),
+				katuCount: parseInt(score['countkatu']),
+				gekiCount: parseInt(score['countgeki']),
+				maxCombo: parseInt(score['maxcombo']),
+				perfectCombo: score['perfect'] === '1',
+				mods: parseInt(score['enabled_mods']),
+				userID: parseInt(score['user_id']),
+				date: new Date(score['date']),
+				rank: score['rank'],
+				pp: parseInt(score['pp']),
+				replayAvailable: score['replay_available'] === '1'
+			}
+		});
+
+		return formattedScores;
 	}
 }
