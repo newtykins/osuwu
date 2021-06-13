@@ -91,7 +91,7 @@ export interface Beatmap {
 export interface UserOptions {
 	mode?: keyof (typeof Constants.Beatmaps.modes);
 	userType?: UserType;
-	eventDays: Range<1, 32>;
+	eventDays?: Range<1, 32>;
 }
 
 export interface Event {
@@ -215,4 +215,10 @@ export interface Score {
 	rank: string;
 	pp: number;
 	replayAvailable: boolean;
+}
+
+export interface UserBestOptions {
+	mode?: typeof Constants.Beatmaps.modes;
+	limit?: number;
+	type?: UserType;
 }

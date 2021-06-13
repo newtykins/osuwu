@@ -3,11 +3,11 @@ import Constants from './Constants';
 import * as countries from 'i18n-iso-countries';
 import * as ojsama from 'ojsama';
 import * as chalk from 'chalk';
-import { BeatmapOptions, PPCalculatorOptions, PPCalculation, UserOptions, Beatmap, Event, User, ScoreOptions, Score } from './Types';
+import { BeatmapOptions, PPCalculatorOptions, PPCalculation, UserOptions, Beatmap, Event, User, ScoreOptions, Score, UserType, UserBestOptions } from './Types';
 
 export default class osuwu {
 	private apiKey: string;
-	public baseUrl = 'https://osu.ppy.sh/api';
+	private baseUrl = 'https://osu.ppy.sh/api';
 	public constants = Constants;
 
 	constructor(apiKey: string) {
@@ -55,7 +55,7 @@ export default class osuwu {
 	 * @private
 	 */
 	private checkLimits(min: number, max: number, limitOf: string, options: object) {
-		if (options && options['limit']) {
+		if (options['limit']) {
 			if (options['limit'] <= min) {
 				this.warn(`The minimum amount of ${limitOf} you can fetch is ${min}, so ${min} ${limitOf} has been returned!`);
 			} else if (options['limit'] > max) {
@@ -65,11 +65,41 @@ export default class osuwu {
 	}
 
 	/**
+	 * Format a score object
+	 * @param score An object of the score returned by the API
+	 * @private
+	 */
+	private formatScore(score: object): Score {
+		return {
+			scoreID: parseInt(score['score_id']),
+			score: parseInt(score['score']),
+			username: score['username'],
+			hitCounts: {
+				300: parseInt(score['count300']),
+				100: parseInt(score['count100']),
+				50: parseInt(score['count50'])
+			},
+			missCount: parseInt(score['countmiss']),
+			katuCount: parseInt(score['countkatu']),
+			gekiCount: parseInt(score['countgeki']),
+			maxCombo: parseInt(score['maxcombo']),
+			perfectCombo: score['perfect'] === '1',
+			mods: parseInt(score['enabled_mods']),
+			userID: parseInt(score['user_id']),
+			date: new Date(score['date']),
+			rank: score['rank'],
+			pp: parseInt(score['pp']),
+			replayAvailable: score['replay_available'] === '1'
+		}
+	}
+
+	/**
 	 * Retrieve general beatmap information
 	 * @param options Configuration of the parameters available for the endpoint
+	 * @returns A list of all beatmaps (one per difficulty) matching criteria
 	 * @async
 	 */
-	public async getBeatmaps(options?: BeatmapOptions): Promise<Beatmap[]> {
+	public async getBeatmaps(options: BeatmapOptions = {}): Promise<Beatmap[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 500, 'beatmaps', options);
 
@@ -162,9 +192,10 @@ export default class osuwu {
 	 * Calculate the pp of a given beatmap
 	 * @param beatmapID The ID of the beatmap to calculate for
 	 * @param options Options for the PP calculator to process
+	 * @returns Basic information about the beatmap + difficulty and pp stats
 	 * @async
 	 */
-	public async calculatePP(beatmapID: string, options?: PPCalculatorOptions): Promise<PPCalculation> {
+	public async calculatePP(beatmapID: string, options: PPCalculatorOptions = {}): Promise<PPCalculation> {
 		// Download the beatmap file
 		const osuFile = await axios.get(`https://osu.ppy.sh/osu/${beatmapID}`, { responseType: 'blob' });
 
@@ -177,26 +208,24 @@ export default class osuwu {
 		const maxCombo = parser.map.max_combo();
 		let combo = maxCombo;
 
-		if (options) {
-			if (typeof options.mods === 'string') {
-				mods = this.constants.Mods.from_string(options.mods);
-				modsString = options.mods;
-			} else {
-				mods = options.mods;
-				modsString = this.constants.Mods.string(options.mods);
-			}
+		if (typeof options.mods === 'string') {
+			mods = this.constants.Mods.from_string(options.mods);
+			modsString = options.mods;
+		} else {
+			mods = options.mods;
+			modsString = this.constants.Mods.string(options.mods);
+		}
 
-			if (options.accuracy) {
-				accuracy = options.accuracy;
-			}
+		if (options.accuracy) {
+			accuracy = options.accuracy;
+		}
 
-			if (options.miss) {
-				miss = options.miss;
-			}
+		if (options.miss) {
+			miss = options.miss;
+		}
 
-			if (options.combo) {
-				combo = options.combo;
-			}
+		if (options.combo) {
+			combo = options.combo;
 		}
 
 		// Calculate difficulty and pp
@@ -266,9 +295,10 @@ export default class osuwu {
 	 * Retrieve general user information
 	 * @param u Either the user ID or username of the user you would like to find
 	 * @param options Configuration of the parameters available for the endpoint
+	 * @returns A list containing user information
 	 * @async
 	 */
-	public async getUser(u: string, options?: UserOptions): Promise<User> {
+	public async getUser(u: UserType, options: UserOptions = {}): Promise<User> {
 		const user = (await this.makeRequest('get_user', options ? {
 			u,
 			m: options.mode,
@@ -371,7 +401,14 @@ export default class osuwu {
 		return parsedUser;
 	}
 
-	public async getScores(beatmapID: number, options?: ScoreOptions): Promise<Score[]> {
+	/**
+	 * Retrieve information about the top 100 scores of a specified beatmap
+	 * @param beatmapID The ID of the beatmap to search for scores for
+	 * @param options Configuration of the parameters available for the endpoint
+	 * @returns A list containing top scores for a specified beatmap
+	 * @async 
+	 */
+	public async getScores(beatmapID: number, options: ScoreOptions = {}): Promise<Score[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 100, 'scores', options);
 
@@ -386,35 +423,32 @@ export default class osuwu {
 		});
 
 		// Format the scores
-		const formattedScores: Score[] = scores.map((score): Score => {
-			// Hit counts and ratios
-			const count300 = parseInt(score['count300']);
-			const count100 = parseInt(score['count100']);
-			const count50 = parseInt(score['count50']);
+		return scores.map((score): Score => this.formatScore(score));
+	}
 
-			return {
-				scoreID: parseInt(score['score_id']),
-				score: parseInt(score['score']),
-				username: score['username'],
-				hitCounts: {
-					300: count300,
-					100: count100,
-					50: count50
-				},
-				missCount: parseInt(score['countmiss']),
-				katuCount: parseInt(score['countkatu']),
-				gekiCount: parseInt(score['countgeki']),
-				maxCombo: parseInt(score['maxcombo']),
-				perfectCombo: score['perfect'] === '1',
-				mods: parseInt(score['enabled_mods']),
-				userID: parseInt(score['user_id']),
-				date: new Date(score['date']),
-				rank: score['rank'],
-				pp: parseInt(score['pp']),
-				replayAvailable: score['replay_available'] === '1'
-			}
+	/**
+	 * Get the top scores for the specified user
+	 * @param u Either the user ID or username of the user you would like to find
+	 * @param options Configuration of the parameters available for the endpoint
+	 * @returns A list containing top scores for a specified user
+	 * @async
+	 */
+	public async getUserBest(u: UserType, options: UserBestOptions = {}): Promise<Omit<Score, 'username'>[]> {
+		// Warn the user if fetch limit boundaries are not met
+		this.checkLimits(1, 100, 'top scores', options);
+
+		// Make the request
+		const bestScores = await this.makeRequest('get_user_best', {
+			u,
+			m: options.mode,
+			limit: options.limit,
+			type: options.type
 		});
 
-		return formattedScores;
+		// Format the scores
+		return bestScores.map((score: any): Omit<Score, 'username'> => {
+			delete score.username;
+			return score;
+		});
 	}
 }
