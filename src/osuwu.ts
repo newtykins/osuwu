@@ -3,7 +3,7 @@ import Constants from './Constants';
 import * as countries from 'i18n-iso-countries';
 import * as ojsama from 'ojsama';
 import * as chalk from 'chalk';
-import { BeatmapOptions, PPCalculatorOptions, PPCalculation, UserOptions, Beatmap, Event, User, ScoreOptions, Score, UserType, UserBestOptions } from './Types';
+import * as Osuwu from './Types';
 
 export default class osuwu {
 	private apiKey: string;
@@ -27,12 +27,16 @@ export default class osuwu {
 		if (parameters) {
 			const keys = Object.keys(parameters);
 
-			Object.values(parameters).forEach((value, i) => {
+			keys.forEach((k, i) => {
+				const value = parameters[k];
+
 				if (value) {
-					url += `&${keys[i]}=${value}`;
+					url += `&${k}=${value}`;
 				}
 			});
 		}
+
+		console.log(url);
 
 		return (await (axios.get(url))).data;
 	}
@@ -69,7 +73,7 @@ export default class osuwu {
 	 * @param score An object of the score returned by the API
 	 * @private
 	 */
-	private formatScore(score: object): Score {
+	private formatScore(score: object): Osuwu.Score {
 		return {
 			scoreID: parseInt(score['score_id']),
 			score: parseInt(score['score']),
@@ -99,7 +103,7 @@ export default class osuwu {
 	 * @returns A list of all beatmaps (one per difficulty) matching criteria
 	 * @async
 	 */
-	public async getBeatmaps(options: BeatmapOptions = {}): Promise<Beatmap[]> {
+	public async getBeatmaps(options: Osuwu.BeatmapOptions = {}): Promise<Osuwu.Beatmap[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 500, 'beatmaps', options);
 
@@ -117,7 +121,7 @@ export default class osuwu {
 		});
 
 		// Parse the beatmaps
-		const parsedBeatmaps = beatmaps.map((beatmap): Beatmap => {
+		const parsedBeatmaps = beatmaps.map((beatmap): Osuwu.Beatmap => {
 			const circles = parseInt(beatmap['count_normal']);
 			const sliders = parseInt(beatmap['count_slider']);
 			const spinners = parseInt(beatmap['count_spinner']);
@@ -195,7 +199,7 @@ export default class osuwu {
 	 * @returns Basic information about the beatmap + difficulty and pp stats
 	 * @async
 	 */
-	public async calculatePP(beatmapID: string, options: PPCalculatorOptions = {}): Promise<PPCalculation> {
+	public async calculatePP(beatmapID: string, options: Osuwu.PPCalculatorOptions = {}): Promise<Osuwu.PPCalculation> {
 		// Download the beatmap file
 		const osuFile = await axios.get(`https://osu.ppy.sh/osu/${beatmapID}`, { responseType: 'blob' });
 
@@ -298,7 +302,7 @@ export default class osuwu {
 	 * @returns A list containing user information
 	 * @async
 	 */
-	public async getUser(u: UserType, options: UserOptions = {}): Promise<User> {
+	public async getUser(u: Osuwu.UserType, options: Osuwu.UserOptions = {}): Promise<Osuwu.User> {
 		const user = (await this.makeRequest('get_user', options ? {
 			u,
 			m: options.mode,
@@ -334,22 +338,7 @@ export default class osuwu {
 		const sSilver = parseInt(user['count_rank_sh']);
 		const sTotal = sGold + sSilver;
 
-		// Events
-		let events = undefined;
-
-		if (user['events']) {
-			events = user['events'].map((event: object): Event => {
-				return {
-					html: event['display_html'],
-					beatmapID: parseInt(event['beatmap_id']),
-					beatmapsetID: parseInt(event['beatmapset_id']),
-					date: new Date(event['date']),
-					epicFactor: parseInt(event['epicfactor'])
-				}
-			});
-		}
-
-		const parsedUser: User = {
+		const parsedUser: Osuwu.User = {
 			userID,
 			username: user['username'],
 			avatarURL,
@@ -395,7 +384,15 @@ export default class osuwu {
 			},
 			country: countries.getName(user['country'], 'en', { select: 'official' }),
 			secondsPlayed: parseInt(user['total_seconds_played']),
-			events
+			events: user['events'] ? user['events'].map((event: object): Osuwu.Event => {
+				return {
+					html: event['display_html'],
+					beatmapID: parseInt(event['beatmap_id']),
+					beatmapsetID: parseInt(event['beatmapset_id']),
+					date: new Date(event['date']),
+					epicFactor: parseInt(event['epicfactor'])
+				}
+			}) : undefined
 		}
 
 		return parsedUser;
@@ -408,7 +405,7 @@ export default class osuwu {
 	 * @returns A list containing top scores for a specified beatmap
 	 * @async 
 	 */
-	public async getScores(beatmapID: number, options: ScoreOptions = {}): Promise<Score[]> {
+	public async getScores(beatmapID: number, options: Osuwu.ScoreOptions = {}): Promise<Osuwu.Score[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 100, 'scores', options);
 
@@ -423,7 +420,7 @@ export default class osuwu {
 		});
 
 		// Format the scores
-		return scores.map((score): Score => this.formatScore(score));
+		return scores.map((score): Osuwu.Score => this.formatScore(score));
 	}
 
 	/**
@@ -433,7 +430,7 @@ export default class osuwu {
 	 * @returns A list containing top scores for a specified user
 	 * @async
 	 */
-	public async getUserBest(u: UserType, options: UserBestOptions = {}): Promise<Omit<Score, 'username'>[]> {
+	public async getUserBest(u: Osuwu.UserType, options: Osuwu.BaseOptions = {}): Promise<Osuwu.BestScore[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 100, 'top scores', options);
 
@@ -446,8 +443,39 @@ export default class osuwu {
 		});
 
 		// Format the scores
-		return bestScores.map((score: any): Omit<Score, 'username'> => {
+		return bestScores.map((score: any): Osuwu.BestScore => {
+			score = this.formatScore(score);
 			delete score.username;
+			return score;
+		});
+	}
+
+	/**
+	 * Get the most recent plays over the last 24 hours for the specified user
+	 * @param u Either the user ID or username of the user you would like to find
+	 * @param options Configuration of the parameters available for the endpoint
+	 * @returns A list containing the most recent scores for a specified user
+	 * @async
+	 */
+	public async getUserRecent(u: Osuwu.UserType, options: Osuwu.BaseOptions = {}): Promise<Osuwu.RecentScore[]> {
+		// Warn the user if fetch limit boundaries are not met
+		this.checkLimits(1, 50, 'recent scores', options);
+
+		// Make the request
+		const recentScores = await this.makeRequest('get_user_recent', {
+			u,
+			m: options.mode,
+			limit: options.limit,
+			type: options.type
+		});
+
+		// Format the scores
+		return recentScores.map((score: any): Osuwu.RecentScore => {
+			score = this.formatScore(score);
+			delete score.username;
+			delete score.score_id;
+			delete score.pp;
+			delete score.replay_available;
 			return score;
 		});
 	}

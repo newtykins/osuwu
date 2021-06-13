@@ -16,7 +16,7 @@ Blame [NTB](https://github.com/GD-NTB) for the atrocious name.
 	- [x] /api/get_user
 	- [x] /api/get_scores
 	- [x] /api/get_user_best
-	- [ ] /api/get_user_recent
+	- [x] /api/get_user_recent
 	- [ ] /api/get_match
 	- [ ] /api/get_replay
 - [x] Use ojsama to calculate beatmap pp

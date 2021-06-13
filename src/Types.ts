@@ -1,10 +1,20 @@
 import Constants from './Constants';
 
-export type UserType = 'id' | 'username';
 export type PrependNextNum<A extends Array<unknown>> = A['length'] extends infer T ? ((t: T, ...a: A) => void) extends ((...x: infer X) => void) ? X : never : never;
 export type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A, 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A['length'] ? 0 : 1];
 export type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
 export type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
+
+export type UserType = 'id' | 'username';
+export type BestScore = Omit<Score, 'username'>;
+export type RecentScore = Omit<Omit<Omit<BestScore, 'score_id'>, 'pp'>, 'replay_available'>;
+
+export interface BaseOptions {
+	mode?: typeof Constants.Beatmaps.modes;
+	limit?: number;
+	type?: UserType;
+}
+
 export interface HitCounts {
 	300: {
 		amount: number;
@@ -135,7 +145,7 @@ export interface User {
 	}
 	country: string;
 	secondsPlayed: number;
-	events: Event[]
+	events: Event[];
 }
 
 export interface PPCalculatorOptions {
@@ -187,12 +197,9 @@ export interface PPCalculation {
 	}
 }
 
-export interface ScoreOptions {
+export interface ScoreOptions extends BaseOptions {
 	user?: number;
-	mode?: typeof Constants.Beatmaps.modes;
 	mods?: number | string;
-	type?: UserType;
-	limit?: number;
 }
 
 export interface Score {
@@ -215,10 +222,4 @@ export interface Score {
 	rank: string;
 	pp: number;
 	replayAvailable: boolean;
-}
-
-export interface UserBestOptions {
-	mode?: typeof Constants.Beatmaps.modes;
-	limit?: number;
-	type?: UserType;
 }
