@@ -11,7 +11,7 @@ Blame [NTB](https://github.com/GD-NTB) for the atrocious name.
 
 ## Todo
 
-- [ ] Wrap the osu! API (v1)
+- [ ] Wrap the osu! API (v1) [osuwuV1]
 	- [x] /api/get_beatmaps
 	- [x] /api/get_user
 	- [x] /api/get_scores
@@ -20,7 +20,7 @@ Blame [NTB](https://github.com/GD-NTB) for the atrocious name.
 	- [ ] /api/get_match
 	- [ ] /api/get_replay
 - [x] Use ojsama to calculate beatmap pp
-- [ ] Wrap the osu! API (v2)
+- [ ] Wrap the osu! API (v2) [osuwu]
 - [ ] Integrate the osu! daily api
 
 Feel free to suggest more either in issues or by DMing newt on Discord @ newt <3#1234
