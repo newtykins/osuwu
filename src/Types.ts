@@ -1,14 +1,14 @@
 import Constants from './Constants';
 
-export type PrependNextNum<A extends Array<unknown>> = A['length'] extends infer T ? ((t: T, ...a: A) => void) extends ((...x: infer X) => void) ? X : never : never;
-export type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A, 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A['length'] ? 0 : 1];
-export type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
-export type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
+type PrependNextNum<A extends Array<unknown>> = A['length'] extends infer T ? ((t: T, ...a: A) => void) extends ((...x: infer X) => void) ? X : never : never;
+type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A, 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A['length'] ? 0 : 1];
+type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
+type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
 
 export type UserType = 'id' | 'username';
 
 export interface BaseOptions {
-	mode?: typeof Constants.Beatmaps.modes;
+	mode?: keyof typeof Constants.Beatmaps.modes;
 	limit?: number;
 	type?: UserType;
 }
@@ -38,7 +38,7 @@ export namespace V1 {
 		beatmapID?: string;
 		user?: string;
 		userType?: UserType;
-		mode?: keyof (typeof Constants.Beatmaps.modes),
+		mode?: keyof typeof Constants.Beatmaps.modes,
 		converted?: boolean;
 		hash?: string;
 		limit?: number;
@@ -175,6 +175,48 @@ export namespace V1 {
 		pp: number;
 		replayAvailable: boolean;
 	}	
+
+	export interface MatchScore {
+		slot: number;
+		team: string;
+		userID: number;
+		score: number;
+		maxCombo: number;
+		hitCounts: HitCounts;
+		pass: boolean;
+	}
+
+	export interface MatchGame {
+		id: number;
+		startTime: Date;
+		endTime: Date;
+		beatmapID: number;
+		mode: string;
+		scoringType: string;
+		teamType: string;
+		mods: number;
+		scores: MatchScore[];
+	}
+
+	export interface Match {
+		id: number;
+		name: string;
+		startTime: Date;
+		endTime: Date;
+		games: MatchGame[];
+	}
+
+	export interface ReplayOptions {
+		mode?: keyof typeof Constants.Beatmaps.modes;
+		scoreID?: number;
+		type?: UserType;
+		mods?: number | string;
+	}
+
+	export interface Replay {
+		content: string;
+		encoding: string;
+	}
 }
 
 export namespace PPCalculator {

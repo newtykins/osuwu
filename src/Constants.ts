@@ -72,5 +72,40 @@ export default {
 			14: 'Other'
 		}
 	},
+	// Enum for matches
+	Matches: {
+		/**
+		 * Scoring types
+		 * @readonly
+		 * @enum {string}
+		 */
+		scoringType: Object.freeze({
+			0: 'Score',
+			1: 'Accuracy',
+			2: 'Combo',
+			3: 'Score V2'
+		}),
+		/**
+		 * Team types
+		 * @readonly
+		 * @enum {string}
+		 */
+		teamType: Object.freeze({
+			0: 'Head to Head',
+			1: 'Tag Co-op',
+			2: 'Team vs',
+			3: 'Tag Team vs'
+		}),
+		/**
+		 * Teams
+		 * @readonly
+		 * @enum {string}
+		 */
+		teams: Object.freeze({
+			0: 'None',
+			1: 'Blue',
+			2: 'Red'
+		})
+	},
 	Mods: ojsama.modbits,
 }
