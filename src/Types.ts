@@ -8,7 +8,7 @@ type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enum
 export type UserType = 'id' | 'username';
 
 export interface BaseOptions {
-	mode?: typeof Constants.Beatmaps.modes;
+	mode?: keyof typeof Constants.Beatmaps.modes;
 	limit?: number;
 	type?: UserType;
 }
@@ -38,7 +38,7 @@ export namespace V1 {
 		beatmapID?: string;
 		user?: string;
 		userType?: UserType;
-		mode?: keyof (typeof Constants.Beatmaps.modes),
+		mode?: keyof typeof Constants.Beatmaps.modes,
 		converted?: boolean;
 		hash?: string;
 		limit?: number;
@@ -204,6 +204,18 @@ export namespace V1 {
 		startTime: Date;
 		endTime: Date;
 		games: MatchGame[];
+	}
+
+	export interface ReplayOptions {
+		mode?: keyof typeof Constants.Beatmaps.modes;
+		scoreID?: number;
+		type?: UserType;
+		mods?: number | string;
+	}
+
+	export interface Replay {
+		content: string;
+		encoding: string;
 	}
 }
 

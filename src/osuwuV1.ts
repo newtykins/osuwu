@@ -442,4 +442,27 @@ export default class osuwuV1 {
 			games
 		}
 	}
+
+	/**
+	 * Get the replay data of a user's score on a map
+	 * @description As this is quite a load-heavy request, it has special rules about rate limiting. You are only allowed to do 10 requests per minute. Also, please note that this request is not intended for batch retrievals.
+	 * @param id The ID of the beatmap
+	 * @param user The user who played the beatmap
+	 * @returns An object containing the key "content", which is a base64-encoded replay.
+	 */
+	public async getReplay(id: string | number, user: string, options: Osuwu.V1.ReplayOptions): Promise<Osuwu.V1.Replay> {
+		const replay = await this.makeRequest('get_replay', {
+			b: id,
+			u: user,
+			m: options.mode,
+			s: options.scoreID,
+			type: options.type,
+			mods: typeof options.mods === 'string' ? ojsama.modbits.from_string(options.mods) : options.mods
+		});
+
+		return {
+			content: replay['content'],
+			encoding: replay['encoding']
+		}
+	}
 }
