@@ -196,7 +196,7 @@ export default class osuwuV1 {
 	 * Retrieve general user information
 	 * @param u Either the user ID or username of the user you would like to find
 	 * @param options Configuration of the parameters available for the endpoint
-	 * @returns A list containing user information
+	 * @returns An object containing user information
 	 * @async
 	 */
 	public async getUser(u: Osuwu.UserType, options: Osuwu.V1.UserOptions = {}): Promise<Osuwu.V1.User> {
@@ -375,5 +375,71 @@ export default class osuwuV1 {
 			delete score.replay_available;
 			return score;
 		});
+	}
+
+	/**
+	 * Retrieve information about a multiplayer match
+	 * @param id The ID of the match to get information about
+	 * @returns An object containing match information, and a player's result
+	 */
+	public async getMatch(id: string | number): Promise<Osuwu.V1.Match> {
+		const match = await this.makeRequest('get_match', {
+			mp: id
+		});
+
+		const games = match['games'].map((game): Osuwu.V1.MatchGame => {
+			const scores = game['scores'].map((score): Osuwu.V1.MatchScore => {
+				const count300 = parseInt(score['count300']);
+				const count100 = parseInt(score['count100']);
+				const count50 = parseInt(score['count50']);
+				const totalHits = count300 + count100 + count50;
+				const percentage300 = (count300 / totalHits) * 100;
+				const percentage100 = (count100 / totalHits) * 100;
+				const percentage50 = (count50 / totalHits) * 100;
+
+				return {
+					slot: parseInt(score['slot']),
+					team: this.constants.Matches.teams[parseInt(score['team'])],
+					userID: parseInt(score['user_id']),
+					score: parseInt(score['score']),
+					maxCombo: parseInt(score['max_combo']),
+					hitCounts: {
+						300: {
+							amount: count300,
+							percentage: percentage300
+						},
+						100: {
+							amount: count100,
+							percentage: percentage100
+						},
+						50: {
+							amount: count50,
+							percentage: percentage50
+						}
+					},
+					pass: parseInt(score['pass']) === 1
+				}
+			})
+
+			return {
+				id: parseInt(game['game_id']),
+				startTime: new Date(game['start_time']),
+				endTime: game['end_time'] ? new Date(game['end_time']) : undefined,
+				beatmapID: parseInt(game['beatmap_id']),
+				mode: this.constants.Beatmaps.modes[parseInt(game['play_mode'])],
+				scoringType: this.constants.Matches.scoringType[parseInt(game['scoring_type'])],
+				teamType: this.constants.Matches.teamType[parseInt(game['team_type'])],
+				mods: parseInt(game['mods']),
+				scores
+			}
+		});
+
+		return {
+			id: parseInt(match['match']['match_id']),
+			name: match['match']['name'],
+			startTime: new Date(match['match']['start_time']),
+			endTime: match['match']['end_time'] ? new Date(match['match']['end_time']) : undefined,
+			games
+		}
 	}
 }
