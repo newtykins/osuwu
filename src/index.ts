@@ -1,8 +1,10 @@
-import osuwuV1 from './osuwuV1';
-import PPCalculator from './PPCalculator';
+import V2 from './V2';
+import V1 from './V1';
+import PP from './PP';
 
-export default osuwuV1;
+export default V2;
 export {
-	osuwuV1,
-	PPCalculator
+	V2,
+	V1,
+	PP
 }

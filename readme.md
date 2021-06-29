@@ -11,6 +11,8 @@ Blame [NTB](https://github.com/GD-NTB) for the atrocious name.
 
 ## Todo
 
+- [x] Use ojsama to calculate beatmap pp [File](src/PPCalculator.ts)
+- [ ] Wrap the osu! API (v2) [File](src/osuwu.ts)
 - [x] Wrap the osu! API (v1) [File](src/osuwuV1.ts)
 	- [x] /api/get_beatmaps
 	- [x] /api/get_user
@@ -19,8 +21,6 @@ Blame [NTB](https://github.com/GD-NTB) for the atrocious name.
 	- [x] /api/get_user_recent
 	- [x] /api/get_match
 	- [x] /api/get_replay
-- [x] Use ojsama to calculate beatmap pp [File](src/PPCalculator.ts)
-- [ ] Wrap the osu! API (v2) [File](src/osuwu.ts)
 
 Feel free to suggest more either in issues or by DMing newt on Discord @ newt <3#1234
 

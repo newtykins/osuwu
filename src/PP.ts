@@ -2,9 +2,9 @@ import axios from 'axios';
 import * as ojsama from 'ojsama';
 import Constants from './Constants';
 import * as chalk from 'chalk';
-import * as Osuwu from './Types';
+import * as osuwu from './Types';
 
-export default class PPCalculator {
+export default class PP {
 	/**
 	 * Calculate the pp of a given beatmap
 	 * @param beatmapID The ID of the beatmap
@@ -12,7 +12,7 @@ export default class PPCalculator {
 	 * @returns Basic information about the beatmap + difficulty and pp stats
 	 * @async
 	 */
-	 public async calculatePP(beatmapID: string | number, options: Osuwu.PPCalculator.Options = {}): Promise<Osuwu.PPCalculator.Calculation> {
+	 public async calculatePP(beatmapID: string | number, options: osuwu.PP.Options = {}): Promise<osuwu.PP.Calculation> {
 		// Download the beatmap file
 		const osuFile = await axios.get(`https://osu.ppy.sh/osu/${beatmapID}`, { responseType: 'blob' });
 

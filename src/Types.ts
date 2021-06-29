@@ -6,6 +6,7 @@ type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] 
 type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
 
 export type UserType = 'id' | 'username';
+export type ID = string | number;
 
 export interface BaseOptions {
 	mode?: keyof typeof Constants.Beatmaps.modes;
@@ -219,7 +220,7 @@ export namespace V1 {
 	}
 }
 
-export namespace PPCalculator {
+export namespace PP {
 	export interface Options {
 		mods?: number | string;
 		combo?: number;

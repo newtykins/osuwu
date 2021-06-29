@@ -3,9 +3,9 @@ import Constants from './Constants';
 import * as countries from 'i18n-iso-countries';
 import * as ojsama from 'ojsama';
 import * as chalk from 'chalk';
-import * as Osuwu from './Types';
+import * as osuwu from './Types';
 
-export default class osuwuV1 {
+export default class V1 {
 	private apiKey: string;
 	private baseUrl = 'https://osu.ppy.sh/api';
 	public constants = Constants;
@@ -73,7 +73,7 @@ export default class osuwuV1 {
 	 * @param score An object of the score returned by the API
 	 * @private
 	 */
-	private formatScore(score: object): Osuwu.V1.Score {
+	private formatScore(score: object): osuwu.V1.Score {
 		return {
 			scoreID: parseInt(score['score_id']),
 			score: parseInt(score['score']),
@@ -103,7 +103,7 @@ export default class osuwuV1 {
 	 * @returns A list of all beatmaps (one per difficulty) matching criteria
 	 * @async
 	 */
-	public async getBeatmaps(options: Osuwu.V1.BeatmapOptions = {}): Promise<Osuwu.V1.Beatmap[]> {
+	public async getBeatmaps(options: osuwu.V1.BeatmapOptions = {}): Promise<osuwu.V1.Beatmap[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 500, 'beatmaps', options);
 
@@ -121,7 +121,7 @@ export default class osuwuV1 {
 		});
 
 		// Parse the beatmaps
-		const parsedBeatmaps = beatmaps.map((beatmap): Osuwu.V1.Beatmap => {
+		const parsedBeatmaps = beatmaps.map((beatmap): osuwu.V1.Beatmap => {
 			const circles = parseInt(beatmap['count_normal']);
 			const sliders = parseInt(beatmap['count_slider']);
 			const spinners = parseInt(beatmap['count_spinner']);
@@ -199,7 +199,7 @@ export default class osuwuV1 {
 	 * @returns An object containing user information
 	 * @async
 	 */
-	public async getUser(u: Osuwu.UserType, options: Osuwu.V1.UserOptions = {}): Promise<Osuwu.V1.User> {
+	public async getUser(u: osuwu.UserType, options: osuwu.V1.UserOptions = {}): Promise<osuwu.V1.User> {
 		const user = (await this.makeRequest('get_user', options ? {
 			u,
 			m: options.mode,
@@ -235,7 +235,7 @@ export default class osuwuV1 {
 		const sSilver = parseInt(user['count_rank_sh']);
 		const sTotal = sGold + sSilver;
 
-		const parsedUser: Osuwu.V1.User = {
+		const parsedUser: osuwu.V1.User = {
 			userID,
 			username: user['username'],
 			avatarURL,
@@ -281,7 +281,7 @@ export default class osuwuV1 {
 			},
 			country: countries.getName(user['country'], 'en', { select: 'official' }),
 			secondsPlayed: parseInt(user['total_seconds_played']),
-			events: user['events'] ? user['events'].map((event: object): Osuwu.V1.Event => {
+			events: user['events'] ? user['events'].map((event: object): osuwu.V1.Event => {
 				return {
 					html: event['display_html'],
 					beatmapID: parseInt(event['beatmap_id']),
@@ -302,7 +302,7 @@ export default class osuwuV1 {
 	 * @returns A list containing top scores for a specified beatmap
 	 * @async 
 	 */
-	public async getScores(beatmapID: number, options: Osuwu.V1.ScoreOptions = {}): Promise<Osuwu.V1.Score[]> {
+	public async getScores(beatmapID: number, options: osuwu.V1.ScoreOptions = {}): Promise<osuwu.V1.Score[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 100, 'scores', options);
 
@@ -317,7 +317,7 @@ export default class osuwuV1 {
 		});
 
 		// Format the scores
-		return scores.map((score): Osuwu.V1.Score => this.formatScore(score));
+		return scores.map((score): osuwu.V1.Score => this.formatScore(score));
 	}
 
 	/**
@@ -327,7 +327,7 @@ export default class osuwuV1 {
 	 * @returns A list containing top scores for a specified user
 	 * @async
 	 */
-	public async getUserBest(u: Osuwu.UserType, options: Osuwu.BaseOptions = {}): Promise<Osuwu.V1.BestScore[]> {
+	public async getUserBest(u: osuwu.UserType, options: osuwu.BaseOptions = {}): Promise<osuwu.V1.BestScore[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 100, 'top scores', options);
 
@@ -340,7 +340,7 @@ export default class osuwuV1 {
 		});
 
 		// Format the scores
-		return bestScores.map((score: any): Osuwu.V1.BestScore => {
+		return bestScores.map((score: any): osuwu.V1.BestScore => {
 			score = this.formatScore(score);
 			delete score.username;
 			return score;
@@ -354,7 +354,7 @@ export default class osuwuV1 {
 	 * @returns A list containing the most recent scores for a specified user
 	 * @async
 	 */
-	public async getUserRecent(u: Osuwu.UserType, options: Osuwu.BaseOptions = {}): Promise<Osuwu.V1.RecentScore[]> {
+	public async getUserRecent(u: osuwu.UserType, options: osuwu.BaseOptions = {}): Promise<osuwu.V1.RecentScore[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 50, 'recent scores', options);
 
@@ -367,7 +367,7 @@ export default class osuwuV1 {
 		});
 
 		// Format the scores
-		return recentScores.map((score: any): Osuwu.V1.RecentScore => {
+		return recentScores.map((score: any): osuwu.V1.RecentScore => {
 			score = this.formatScore(score);
 			delete score.username;
 			delete score.score_id;
@@ -382,13 +382,13 @@ export default class osuwuV1 {
 	 * @param id The ID of the match to get information about
 	 * @returns An object containing match information, and a player's result
 	 */
-	public async getMatch(id: string | number): Promise<Osuwu.V1.Match> {
+	public async getMatch(id: osuwu.ID): Promise<osuwu.V1.Match> {
 		const match = await this.makeRequest('get_match', {
 			mp: id
 		});
 
-		const games = match['games'].map((game): Osuwu.V1.MatchGame => {
-			const scores = game['scores'].map((score): Osuwu.V1.MatchScore => {
+		const games = match['games'].map((game): osuwu.V1.MatchGame => {
+			const scores = game['scores'].map((score): osuwu.V1.MatchScore => {
 				const count300 = parseInt(score['count300']);
 				const count100 = parseInt(score['count100']);
 				const count50 = parseInt(score['count50']);
@@ -450,7 +450,7 @@ export default class osuwuV1 {
 	 * @param user The user who played the beatmap
 	 * @returns An object containing the key "content", which is a base64-encoded replay.
 	 */
-	public async getReplay(id: string | number, user: string, options: Osuwu.V1.ReplayOptions): Promise<Osuwu.V1.Replay> {
+	public async getReplay(id: osuwu.ID, user: string, options: osuwu.V1.ReplayOptions): Promise<osuwu.V1.Replay> {
 		const replay = await this.makeRequest('get_replay', {
 			b: id,
 			u: user,
