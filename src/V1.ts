@@ -36,8 +36,6 @@ export default class V1 {
 			});
 		}
 
-		console.log(url);
-
 		return (await (axios.get(url))).data;
 	}
 
@@ -75,24 +73,24 @@ export default class V1 {
 	 */
 	private formatScore(score: object): osuwu.V1.Score {
 		return {
-			scoreID: parseInt(score['score_id']),
-			score: parseInt(score['score']),
+			scoreID: parseFloat(score['score_id']),
+			score: parseFloat(score['score']),
 			username: score['username'],
 			hitCounts: {
-				300: parseInt(score['count300']),
-				100: parseInt(score['count100']),
-				50: parseInt(score['count50'])
+				300: parseFloat(score['count300']),
+				100: parseFloat(score['count100']),
+				50: parseFloat(score['count50'])
 			},
-			missCount: parseInt(score['countmiss']),
-			katuCount: parseInt(score['countkatu']),
-			gekiCount: parseInt(score['countgeki']),
-			maxCombo: parseInt(score['maxcombo']),
+			missCount: parseFloat(score['countmiss']),
+			katuCount: parseFloat(score['countkatu']),
+			gekiCount: parseFloat(score['countgeki']),
+			maxCombo: parseFloat(score['maxcombo']),
 			perfectCombo: score['perfect'] === '1',
-			mods: parseInt(score['enabled_mods']),
-			userID: parseInt(score['user_id']),
+			mods: parseFloat(score['enabled_mods']),
+			userID: parseFloat(score['user_id']),
 			date: new Date(score['date']),
 			rank: score['rank'],
-			pp: parseInt(score['pp']),
+			pp: parseFloat(score['pp']),
 			replayAvailable: score['replay_available'] === '1'
 		}
 	}
@@ -122,14 +120,14 @@ export default class V1 {
 
 		// Parse the beatmaps
 		const parsedBeatmaps = beatmaps.map((beatmap): osuwu.V1.Beatmap => {
-			const circles = parseInt(beatmap['count_normal']);
-			const sliders = parseInt(beatmap['count_slider']);
-			const spinners = parseInt(beatmap['count_spinner']);
-			const playCount = parseInt(beatmap['playcount']);
-			const passCount = parseInt(beatmap['passcount']);
+			const circles = parseFloat(beatmap['count_normal']);
+			const sliders = parseFloat(beatmap['count_slider']);
+			const spinners = parseFloat(beatmap['count_spinner']);
+			const playCount = parseFloat(beatmap['playcount']);
+			const passCount = parseFloat(beatmap['passcount']);
 			const passPercentage = (playCount / passCount) * 100;
-			const beatmapsetID = parseInt(beatmap['beatmapset_id']);
-			const beatmapID = parseInt(beatmap['beatmap_id']);
+			const beatmapsetID = parseFloat(beatmap['beatmapset_id']);
+			const beatmapID = parseFloat(beatmap['beatmap_id']);
 			const coverImage = `https://assets.ppy.sh/beatmaps/${beatmapsetID}/covers/cover.jpg`;
 			const coverThumbnail = `https://b.ppy.sh/thumb/${beatmapsetID}l.jpg`; 
 
@@ -152,15 +150,15 @@ export default class V1 {
 				title: beatmap['title'],
 				mapper: {
 					username: beatmap['creator'],
-					id: beatmap['creator_id']
+					userID: beatmap['creator_id']
 				},
 				bpm: parseFloat(beatmap['bpm']),
 				source: beatmap['source'],
 				tags: beatmap['tags'] ? beatmap['tags'].split(' ') : undefined,
-				genre: this.constants.Beatmaps.genres[parseInt(beatmap['genre_id'])],
-				language: this.constants.Beatmaps.langauge[parseInt(beatmap['language_id'])],
-				approved: this.constants.Beatmaps.approved[parseInt(beatmap['approved'])],
-				mode: this.constants.Beatmaps.modes[parseInt(beatmap['mode'])],
+				genre: this.constants.Beatmaps.genres[parseFloat(beatmap['genre_id'])],
+				language: this.constants.Beatmaps.langauge[parseFloat(beatmap['language_id'])],
+				approved: this.constants.Beatmaps.approved[parseFloat(beatmap['approved'])],
+				mode: this.constants.Beatmaps.modes[parseFloat(beatmap['mode'])],
 				playCount,
 				passCount,
 				passPercentage,
@@ -174,7 +172,7 @@ export default class V1 {
 					image: coverImage,
 					thumbnail: coverThumbnail
 				},
-				favourites: parseInt(beatmap['favourite_count']),
+				favourites: parseFloat(beatmap['favourite_count']),
 				rating: parseFloat(beatmap['rating']),
 				totalLengthSeconds: parseFloat(beatmap['total_length']),
 				hitLengthSeconds: parseFloat(beatmap['hit_length']),
@@ -208,31 +206,31 @@ export default class V1 {
 		} : { u }))[0];
 
 		// General
-		const userID = parseInt(user['user_id']);
+		const userID = parseFloat(user['user_id']);
 		const avatarURL = `https://a.ppy.sh/${userID}`;
-		const playCount = parseInt(user['playcount']);
+		const playCount = parseFloat(user['playcount']);
 
 		// Hit counts and ratios
-		const count300 = parseInt(user['count300']);
-		const count100 = parseInt(user['count100']);
-		const count50 = parseInt(user['count50']);
+		const count300 = parseFloat(user['count300']);
+		const count100 = parseFloat(user['count100']);
+		const count50 = parseFloat(user['count50']);
 		const totalHits = count300 + count100 + count50;
 		const percentage300 = (count300 / totalHits) * 100;
 		const percentage100 = (count100 / totalHits) * 100;
 		const percentage50 = (count50 / totalHits) * 100;
 
 		// Score
-		const rankedScore = parseInt(user['ranked_score']);
-		const totalScore = parseInt(user['total_score']);
+		const rankedScore = parseFloat(user['ranked_score']);
+		const totalScore = parseFloat(user['total_score']);
 		const unrankedScore = totalScore - rankedScore;
 		const scorePerPlay = totalScore / playCount;
 		
 		// Ranks
-		const ssGold = parseInt(user['count_rank_ss']);
-		const ssSilver = parseInt(user['count_rank_ssh']);
+		const ssGold = parseFloat(user['count_rank_ss']);
+		const ssSilver = parseFloat(user['count_rank_ssh']);
 		const ssTotal = ssGold + ssSilver;
-		const sGold = parseInt(user['count_rank_s']);
-		const sSilver = parseInt(user['count_rank_sh']);
+		const sGold = parseFloat(user['count_rank_s']);
+		const sSilver = parseFloat(user['count_rank_sh']);
 		const sTotal = sGold + sSilver;
 
 		const parsedUser: osuwu.V1.User = {
@@ -256,9 +254,9 @@ export default class V1 {
 			},
 			playCount,
 			level: parseFloat(user['level']),
-			rank: parseInt(user['pp_rank']),
-			countryRank: parseInt(user['pp_country_rank']),
-			pp: parseInt(user['pp_raw']),
+			rank: parseFloat(user['pp_rank']),
+			countryRank: parseFloat(user['pp_country_rank']),
+			pp: parseFloat(user['pp_raw']),
 			accuracy: parseFloat(user['accuracy']),
 			score: {
 				total: totalScore,
@@ -277,17 +275,17 @@ export default class V1 {
 					silver: sSilver,
 					total: sTotal
 				},
-				a: parseInt(user['count_rank_a'])
+				a: parseFloat(user['count_rank_a'])
 			},
 			country: countries.getName(user['country'], 'en', { select: 'official' }),
-			secondsPlayed: parseInt(user['total_seconds_played']),
+			secondsPlayed: parseFloat(user['total_seconds_played']),
 			events: user['events'] ? user['events'].map((event: object): osuwu.V1.Event => {
 				return {
 					html: event['display_html'],
-					beatmapID: parseInt(event['beatmap_id']),
-					beatmapsetID: parseInt(event['beatmapset_id']),
+					beatmapID: parseFloat(event['beatmap_id']),
+					beatmapsetID: parseFloat(event['beatmapset_id']),
 					date: new Date(event['date']),
-					epicFactor: parseInt(event['epicfactor'])
+					epicFactor: parseFloat(event['epicfactor'])
 				}
 			}) : undefined
 		}
@@ -327,7 +325,7 @@ export default class V1 {
 	 * @returns A list containing top scores for a specified user
 	 * @async
 	 */
-	public async getUserBest(u: osuwu.UserType, options: osuwu.BaseOptions = {}): Promise<osuwu.V1.BestScore[]> {
+	public async getUserBest(u: osuwu.UserType, options: osuwu.V1.BaseOptions = {}): Promise<osuwu.V1.BestScore[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 100, 'top scores', options);
 
@@ -354,7 +352,7 @@ export default class V1 {
 	 * @returns A list containing the most recent scores for a specified user
 	 * @async
 	 */
-	public async getUserRecent(u: osuwu.UserType, options: osuwu.BaseOptions = {}): Promise<osuwu.V1.RecentScore[]> {
+	public async getUserRecent(u: osuwu.UserType, options: osuwu.V1.BaseOptions = {}): Promise<osuwu.V1.RecentScore[]> {
 		// Warn the user if fetch limit boundaries are not met
 		this.checkLimits(1, 50, 'recent scores', options);
 
@@ -389,20 +387,20 @@ export default class V1 {
 
 		const games = match['games'].map((game): osuwu.V1.MatchGame => {
 			const scores = game['scores'].map((score): osuwu.V1.MatchScore => {
-				const count300 = parseInt(score['count300']);
-				const count100 = parseInt(score['count100']);
-				const count50 = parseInt(score['count50']);
+				const count300 = parseFloat(score['count300']);
+				const count100 = parseFloat(score['count100']);
+				const count50 = parseFloat(score['count50']);
 				const totalHits = count300 + count100 + count50;
 				const percentage300 = (count300 / totalHits) * 100;
 				const percentage100 = (count100 / totalHits) * 100;
 				const percentage50 = (count50 / totalHits) * 100;
 
 				return {
-					slot: parseInt(score['slot']),
-					team: this.constants.Matches.teams[parseInt(score['team'])],
-					userID: parseInt(score['user_id']),
-					score: parseInt(score['score']),
-					maxCombo: parseInt(score['max_combo']),
+					slot: parseFloat(score['slot']),
+					team: this.constants.Matches.teams[parseFloat(score['team'])],
+					userID: parseFloat(score['user_id']),
+					score: parseFloat(score['score']),
+					maxCombo: parseFloat(score['max_combo']),
 					hitCounts: {
 						300: {
 							amount: count300,
@@ -417,25 +415,25 @@ export default class V1 {
 							percentage: percentage50
 						}
 					},
-					pass: parseInt(score['pass']) === 1
+					pass: parseFloat(score['pass']) === 1
 				}
 			})
 
 			return {
-				id: parseInt(game['game_id']),
+				gameID: parseFloat(game['game_id']),
 				startTime: new Date(game['start_time']),
 				endTime: game['end_time'] ? new Date(game['end_time']) : undefined,
-				beatmapID: parseInt(game['beatmap_id']),
-				mode: this.constants.Beatmaps.modes[parseInt(game['play_mode'])],
-				scoringType: this.constants.Matches.scoringType[parseInt(game['scoring_type'])],
-				teamType: this.constants.Matches.teamType[parseInt(game['team_type'])],
-				mods: parseInt(game['mods']),
+				beatmapID: parseFloat(game['beatmap_id']),
+				mode: this.constants.Beatmaps.modes[parseFloat(game['play_mode'])],
+				scoringType: this.constants.Matches.scoringType[parseFloat(game['scoring_type'])],
+				teamType: this.constants.Matches.teamType[parseFloat(game['team_type'])],
+				mods: parseFloat(game['mods']),
 				scores
 			}
 		});
 
 		return {
-			id: parseInt(match['match']['match_id']),
+			matchID: parseFloat(match['match']['match_id']),
 			name: match['match']['name'],
 			startTime: new Date(match['match']['start_time']),
 			endTime: match['match']['end_time'] ? new Date(match['match']['end_time']) : undefined,

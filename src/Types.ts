@@ -8,10 +8,11 @@ type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enum
 export type UserType = 'id' | 'username';
 export type ID = string | number;
 
-export interface BaseOptions {
-	mode?: keyof typeof Constants.Beatmaps.modes;
-	limit?: number;
-	type?: UserType;
+export interface ObjectCount {
+	total: number;
+	circles: number;
+	sliders: number;
+	spinners: number;
 }
 
 export interface HitCounts {
@@ -29,10 +30,113 @@ export interface HitCounts {
 	}
 }
 
+export namespace V2 {
+	export interface Covers {
+		cover: string;
+		cover2x: string;
+		card: string;
+		card2x: string;
+		list: string;
+		list2x: string;
+		slimcover: string;
+		slimcover2x: string;
+	}
+
+	export interface BeatmapsetCompact {
+		artist: string;
+		artistUnicode: string;
+		covers: Covers;
+		mapper: string;
+		favouriteCount: number;
+		beatmapsetID: number;
+		nsfw: boolean;
+		playCount: number;
+		previewURL: string;
+		source: string;
+		status: string;
+		title: string;
+		titleUnicode: string;
+		userID: number;
+		video: string;
+	}
+
+	export interface Beatmapset extends BeatmapsetCompact {
+		availability: {
+			downloadDisabled: boolean;
+			moreInformation: string;
+		}
+		bpm: number;
+		canBeHyped: boolean;
+		discussion: {
+			enabled: boolean;
+			locked: boolean;
+		}
+		hype: {
+			current: number;
+			required: number;
+		}
+		isScoreable: boolean;
+		lastUpdated: Date;
+		legacyThreadURL: string;
+		nominations: {
+			current: number;
+			required: number;
+		}
+		ranked: string;
+		rankedDate: Date;
+		storyboard: boolean;
+		submittedDate: Date;
+		tags: string[];
+	}
+
+	export interface BeatmapCompact {
+		beatmapID: number;
+		difficultyName: string;
+		difficultyRating: number;
+		totalLength: number;
+		status: string;
+		mode: string;
+	}
+
+	export interface Failtimes {
+		exit: number[];
+		fail: number[];
+	}
+
+	export interface Beatmap extends BeatmapCompact {
+		difficultyStats: {
+			ar: number;
+			cs: number;
+			hp: number;
+			od: number;
+		}
+		beatmapset: Beatmapset;
+		failtimes: Failtimes;
+		maxCombo: number;
+		beatmapsetID: number;
+		bpm: number;
+		convert: boolean;
+		objects: ObjectCount;
+		deletedAt: Date;
+		hitLength: number;
+		isScoreable: boolean;
+		lastUpdated: Date;
+		passCount: number;
+		playCount: number;
+		ranked: number;
+		url: string;
+	}
+}
+
 export namespace V1 {	
 	export type BestScore = Omit<V1.Score, 'username'>;
 	export type RecentScore = Omit<Omit<Omit<BestScore, 'score_id'>, 'pp'>, 'replay_available'>;
 
+	export interface BaseOptions {
+		mode?: keyof typeof Constants.Beatmaps.modes;
+		limit?: number;
+		type?: UserType;
+	}
 	export interface BeatmapOptions {
 		since?: Date;
 		beatmapsetID?: string;
@@ -64,7 +168,7 @@ export namespace V1 {
 		title: string;
 		mapper: {
 			username: string;
-			id: string;
+			userID: string;
 		}
 		bpm: number;
 		source: string;
@@ -76,12 +180,7 @@ export namespace V1 {
 		playCount: number;
 		passCount: number;
 		passPercentage: number;
-		objects: {
-			circles: number;
-			sliders: number;
-			spinners: number;
-			total: number;
-		}
+		objects: ObjectCount;
 		cover: {
 			image: string;
 			thumbnail: string;
@@ -188,7 +287,7 @@ export namespace V1 {
 	}
 
 	export interface MatchGame {
-		id: number;
+		gameID: number;
 		startTime: Date;
 		endTime: Date;
 		beatmapID: number;
@@ -200,7 +299,7 @@ export namespace V1 {
 	}
 
 	export interface Match {
-		id: number;
+		matchID: number;
 		name: string;
 		startTime: Date;
 		endTime: Date;
@@ -233,12 +332,7 @@ export namespace PP {
 		ar: number;
 		od: number;
 		hp: number;
-		objects: {
-			total: number;
-			circles: number;
-			sliders: number;
-			spinners: number;
-		}
+		objects: ObjectCount;
 		stars: {
 			total: number;
 			aim: number;

@@ -107,5 +107,5 @@ export default {
 			2: 'Red'
 		})
 	},
-	Mods: ojsama.modbits,
+	Mods: ojsama.modbits
 }
